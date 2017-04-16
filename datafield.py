@@ -1,20 +1,12 @@
 # this file contained the hyperparameter
 import numpy as np
-gBlurKernelSize=  5
-cannyLowThreshold= 50
-cannyHighThreshold= 150
-# region_of_interest , mask parameter
-topLeft =(420,330)
-topRight = (550,330)
-bottomLeft =(137,539)
-bottomRight = (920,539)
-maskVertices = np.array([[topLeft,topRight,bottomRight,bottomLeft]],dtype = np.int32)
 
-# houghLines parameter
-hl_rho = 2
-hl_theta = np.pi/180
-hl_threshold = 1
-hl_minLineLen = 15
-hl_maxLineGap = 3
+xtr,ytr = 690,450   # x,y topRight
+xbr,ybr = 1112,719  # x,y bottomRight
+xbl,ybl = 223,719   # x,y bottomLeft
+xtl,ytl = 596,450   # x,y topLeft
 
-imgIndex = 0
+xtr_dst,ytr_dst = 960,0  # x,y topRight distortion
+xbr_dst,ybr_dst = 960,720  # x,y bottomRight distortion
+xbl_dst,ybl_dst = 320,720   # x,y bottomLeft distortion
+xtl_dst,ytl_dst = 320,0   # x,y topLeft distortion
