@@ -3,6 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import pickle
+from datafield import *
 
 def dir_threshold(img, sobel_kernel=3, thresh=(0, np.pi/3)):
     gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -87,3 +88,21 @@ def pipeline(img, s_thresh=(170, 255), sx_thresh=(20, 100)):
     combined_binary = np.zeros_like(sxbinary)
     combined_binary[(s_binary == 1) | (sxbinary == 1)] = 1
     return combined_binary
+
+def warp(img):
+    img_size=(img.shape[1],img.shape[0])
+    src = np.float32(
+        [[xtr,ytr],
+         [xbr,ybr],
+         [xbl,ybl],
+         [xtl,ytl]])
+    dst = np.float32(
+        [[xtr_dst,ytr_dst],
+         [xbr_dst,ybr_dst],
+         [xbl_dst,ybl_dst],
+         [xtl_dst,ytl_dst]])
+    M = cv2.getPerspectiveTransform(src,dst)
+    Minv = cv2.getPerspectiveTransform(dst,src)
+    warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
+
+    return warped
