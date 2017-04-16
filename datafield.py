@@ -10,3 +10,6 @@ xtr_dst,ytr_dst = 960,0  # x,y topRight distortion
 xbr_dst,ybr_dst = 960,720  # x,y bottomRight distortion
 xbl_dst,ybl_dst = 320,720   # x,y bottomLeft distortion
 xtl_dst,ytl_dst = 320,0   # x,y topLeft distortion
+
+#camera paramter
+ImgSize =(1280,720)
