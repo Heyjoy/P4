@@ -15,8 +15,9 @@ The goals / steps of this project are the following:
 
 [image1]: ./output_images/Undistorted.png "original"
 [image2]: ./test_images/straight_lines2.jpg "Road Transformed"
+[image21]:./output_images/real_undist.jpg "Road Transformed"
 [image3]: ./output_images/pipelineResult.jpg "Binary combination picture"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
+[image4]: ./output_images\perspective_transform.png "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
@@ -46,29 +47,29 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 #### 1. Provide an example of a distortion-corrected image.
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![Real road Image][image2]
-
+![Real road Image before distortion][image2]
+![Real road Image after distortion][image21]
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color HSV select function `hls_select()` )and gradient thresholds to generate a binary image (thresholding steps at function pipeline() in `uitils.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+I used a combination of color HSV select function `utils.hls_select()` and gradient thresholds to generate a binary image,thresholding steps at function `utils.pipeline()` in `uitils.py`.  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
 
 ![image process after pipeline][image3]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in the file `utils.py`. The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the manually give the point and transform it. 
+The code for my perspective transform includes a function called `warper()`, which appears in the file `utils.py`. The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the manually give the point and transform it.
 This resulted in the following source and destination points:
 
 | Source        | Destination   | Position    |
 |:-------------:|:-------------:|:-----------:|
-| 690,450       | 320, 0        | Top Right   |
-| 203, 720      | 320, 720      | Bottom Right|
-| 1127, 720     | 960, 720      | Bottom Left |
-| 695, 460      | 960, 0        | Top Left    |
+| 690,450       | 960,0         | Top Right   |
+| 1112,719      | 960,720       | Bottom Right|
+| 223,719       | 320,720       | Bottom Left |
+| 596,450       | 320,0         | Top Left    |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
+![warp image][image4]
 
 ####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 

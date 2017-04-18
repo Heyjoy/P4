@@ -147,6 +147,9 @@ def cameraUndostort(img):
     if camera_pfile.is_file():
         dist_pickle = pickle.load( open( "./camera_cal/wide_dist_pickle.p", "rb" ))
         dst = cv2.undistort(img, dist_pickle["mtx"], dist_pickle["dist"], None, dist_pickle["mtx"])
-        cv2.imwrite('camera_cal/calibration2_undist.jpg',dst)
+        dst = cv2.cvtColor(dst, cv2.COLOR_BGR2RGB)
+        cv2.imwrite('output_images/real_undist.jpg',dst)
+        return dst
     else:
         print("please runing cameraCalibartion() first!")
+        return None
