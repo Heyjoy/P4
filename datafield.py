@@ -12,7 +12,7 @@ xbl_dst,ybl_dst = 320,720   # x,y bottomLeft Destination
 xtl_dst,ytl_dst = 320,0   # x,y topLeft Destination
 
 #camera paramter
-ImgSize =(1280,720)
+
 
 pip_s_thresh  = (150, 255)
 pip_sx_thresh = (20, 100)
