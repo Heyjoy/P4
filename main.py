@@ -1,6 +1,7 @@
 from utils import *
 from poly import *
 from cameraUtils import *
+from line import *
 import matplotlib.image as mpimg
 import cv2
 import numpy as np
@@ -9,21 +10,27 @@ import matplotlib.pyplot as plt
 from moviepy.editor import VideoFileClip
 
 
-def process_image(image):
+def process_image(OrgImage):
     global lP
-    image = cameraUndistort(image) # Undistort the image
+    global Lane
+    image = cameraUndistort(OrgImage) # Undistort the image
     image = pipeline(image) # combination binary image
-    image = warp(image) # warp image
-    a= lP.lanePolyfitPipeline(image)
-    print(a)
-
+    image = Lane.warp(image) # warp image
+    lP.lanePolyfitPipeline(image)
+    #print(lP.left_fit,lP.right_fit)
+    image=Lane.reslutImage(OrgImage,lP.left_fit,lP.right_fit)
     return image
 
-lP=lanePloyfit()
-image = mpimg.imread('./test_images/straight_lines1.jpg')
+lP=LanePloyfit()
+Lane = Line()
+image = mpimg.imread('./test_images/test4.jpg')
 res=process_image(image)
-#imagePlot(image,res)
+imagePlot(image,res)
 
+mp4_output = 'res.mp4'
+clip1 = VideoFileClip("project_video.mp4")
+res_clip = clip1.fl_image(process_image)
+res_clip.write_videofile(mp4_output, audio=False)
 
 
 

@@ -66,24 +66,6 @@ def hls_select(img, thresh=(0, 255)):
     binary_output[(s_channel > thresh[0]) & (s_channel <= thresh[1])] = 1
     return binary_output
 
-def warp(img):
-    img_size=(img.shape[1],img.shape[0])
-    src = np.float32(
-        [[xtr,ytr],
-         [xbr,ybr],
-         [xbl,ybl],
-         [xtl,ytl]])
-    dst = np.float32(
-        [[xtr_dst,ytr_dst],
-         [xbr_dst,ybr_dst],
-         [xbl_dst,ybl_dst],
-         [xtl_dst,ytl_dst]])
-    M = cv2.getPerspectiveTransform(src,dst)
-    Minv = cv2.getPerspectiveTransform(dst,src)
-    warped = cv2.warpPerspective(img,M,img_size,flags=cv2.INTER_LINEAR)
-
-    return warped
-
 # for plot
 def imagePlot(srcImage,reslutImage,srcColor=None,resColor ='gray'):
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
