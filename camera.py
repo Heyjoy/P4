@@ -4,7 +4,7 @@ import cv2
 import glob
 from pathlib import Path
 
-def cameraCalibration():
+def calibration():
     objp = np.zeros((6*9,3), np.float32)
     objp[:,:2] = np.mgrid[0:9, 0:6].T.reshape(-1,2)
     # Arrays to store object points and image points from all the images.
@@ -37,7 +37,7 @@ def cameraCalibration():
     dist_pickle["dist"] = dist
     pickle.dump( dist_pickle, open( "camera_cal/wide_dist_pickle.p", "wb" ) )
 
-def cameraUndistort(img):
+def undistort(img):
     camera_pfile = Path("./camera_cal/wide_dist_pickle.p")
     if camera_pfile.is_file():
         dist_pickle = pickle.load( open( "./camera_cal/wide_dist_pickle.p", "rb" ))
@@ -48,5 +48,5 @@ def cameraUndistort(img):
     else:
         print("not exist this file, now runing cameraCalibartion()!")
         print("afterwards runing this funtion again!")
-        cameraCalibration()
+        calibration()
         return None
