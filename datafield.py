@@ -11,7 +11,7 @@ _rightLine = line.Line()
 #camera paramter
 pip_s_thresh  = (150, 255)
 pip_sx_thresh = (20, 100)
-
+imageSize = [720,1280]
 #transform perspective parameters
 
 xtr,ytr = 690,450   # x,y topRight
@@ -36,3 +36,11 @@ dst = np.float32(
      [xtl_dst,ytl_dst]])
 M = cv2.getPerspectiveTransform(src,dst)# transfer Matrix
 Minv = cv2.getPerspectiveTransform(dst,src)
+
+# Define conversions in x and y from pixels space to meters
+ym_per_pix = 30/720 # meters per pixel in y dimension
+xm_per_pix = 3.7/650 # meters per pixel in x dimension
+
+simpleDetectMargin = 50
+
+cnt =0

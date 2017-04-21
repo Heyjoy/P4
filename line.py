@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import datafield as df
-
+import transform
 class Line():
     def __init__(self):
         # was the line detected in the last iteration?
@@ -26,13 +26,25 @@ class Line():
         self.allx = None
         #y values for detected line pixels
         self.ally = None
-
+    def calCurvature(self):
+        fit_cr = np.polyfit(self.ally*df.ym_per_pix , self.allx*df.xm_per_pix, 2)
+        y_eval = np.max(self.ally)
+        radius_of_curvature = ((1 + (2*fit_cr[0]*y_eval*df.ym_per_pix + fit_cr[1])**2)**1.5) / np.absolute(2*fit_cr[0])
+        #print ("{} m".format(self.radius_of_curvature))
+        return radius_of_curvature
+    def calDistance(self):
+        line_base_pos = int(self.bestx -df.imageSize[1]/2)*df.xm_per_pix
+        return line_base_pos
 leftLine = Line()
 rightLine = Line()
 
 def santiyCheck(left_fit,right_fit):
-    checkState = False
+    checkState = True
     # Checking that they have similar curvature
+    leftLine.diffs = np.absolute(np.around((leftLine.best_fit - left_fit),1))
+    rightLine.diffs = np.absolute(np.around((rightLine.best_fit - right_fit),1))
+    if(leftLine.diffs[2] > 50 or rightLine.diffs[2] >50):
+        checkState = False
     # Checking that they are separated by approximately the right distance horizontally
     # Checking that they are roughly parallel
     return checkState
@@ -42,38 +54,60 @@ def laneDetect(binary_warped):
     # if pass do simple
     # if no pass, Santiy Check skip this frame and counting up
     if(leftLine.detected and rightLine.detected):
-        print("simple Detect process")
-        left_fit,right_fit = simpleDetect(binary_warped)
-        checkStatus = santiyCheck(left_fit,right_fit)
-        if (checkStatus == False):
-            histogramDetect(binary_warped)
+        #print("simple Detect process")
+        simpleDetect(binary_warped)
     else:
-        print("was no detected lines before, do histogram detect method")
+        #print("was no detected lines before, do histogram detect method")
         histogramDetect(binary_warped)
 
 
+    leftLine.radius_of_curvature = leftLine.calCurvature()
+    rightLine.radius_of_curvature = rightLine.calCurvature()
 
+# in lane Detect followed Lane paramters update.
+# Line.allx,Line.ally,Line.current_fit, Line.detected,best_fit,fitx
 def simpleDetect(binary_warped):
-    if (leftLine.detected and rightLine.detected):
-        nonzero = binary_warped.nonzero()
-        nonzeroy = np.array(nonzero[0])
-        nonzerox = np.array(nonzero[1])
-        margin = 100
+    nonzero = binary_warped.nonzero()
+    nonzeroy = np.array(nonzero[0])
+    nonzerox = np.array(nonzero[1])
+    margin = df.simpleDetectMargin
 
-        left_fit = leftLine.current_fit
-        right_fit = rightLine.current_fit
-        left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin)))
-        right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] + margin)))
+    left_fit = leftLine.best_fit # read prev. value
+    right_fit = rightLine.best_fit  # read prev. value
+    left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin)))
+    right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] + margin)))
 
-        # Again, extract left and right line pixel positions
-        leftx = nonzerox[left_lane_inds]
-        lefty = nonzeroy[left_lane_inds]
-        rightx = nonzerox[right_lane_inds]
-        righty = nonzeroy[right_lane_inds]
-        # Fit a second order polynomial to each
-        left_fit = np.polyfit(lefty, leftx, 2)
-        right_fit = np.polyfit(righty, rightx, 2)
-        return left_fit,right_fit
+    # Again, extract left and right line pixel positions
+    leftx = nonzerox[left_lane_inds]
+    lefty = nonzeroy[left_lane_inds]
+    rightx = nonzerox[right_lane_inds]
+    righty = nonzeroy[right_lane_inds]
+    # Fit a second order polynomial to each
+    left_fit = np.polyfit(lefty, leftx, 2)
+    right_fit = np.polyfit(righty, rightx, 2)
+    # santiyCheck, only update the result when pass the check
+    if(santiyCheck(left_fit,right_fit)):
+        leftLine.allx = nonzerox[left_lane_inds]
+        leftLine.ally = nonzeroy[left_lane_inds]
+        rightLine.allx = nonzerox[right_lane_inds]
+        rightLine.ally = nonzeroy[right_lane_inds]
+        leftLine.current_fit = left_fit
+        rightLine.current_fit = right_fit
+        leftLine.best_fit = (leftLine.best_fit + left_fit)/2
+        rightLine.best_fit = (rightLine.best_fit+ right_fit)/2
+
+        ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+        leftLine.recent_xfitted = leftLine.current_fit[0]*ploty**2 + leftLine.current_fit[1]*ploty + leftLine.current_fit[2]
+        rightLine.recent_xfitted = rightLine.current_fit[0]*ploty**2 + rightLine.current_fit[1]*ploty + rightLine.current_fit[2]
+        leftLine.bestx = np.mean(leftLine.recent_xfitted)
+        rightLine.bestx = np.mean(rightLine.recent_xfitted)
+
+    #else: # not save the caculation reslut this time. do noting.
+        #leftLine.detected = False
+        #rightLine.detected = False
+        # return
+
+
 def histogramDetect(binary_warped):
     histogram = np.sum(binary_warped[int(binary_warped.shape[0]/2):,:], axis=0)
     # Create an output image to draw on and  visualize the result
@@ -94,8 +128,7 @@ def histogramDetect(binary_warped):
     # Current positions to be updated for each window
     leftx_current = leftx_base
     rightx_current = rightx_base
-    leftLine.line_base_pos = leftx_base
-    rightLine.line_base_pos = rightx_base
+
     # Set the width of the windows +/- margin
     margin = 100
     # Set minimum number of pixels found to recenter window
@@ -141,9 +174,21 @@ def histogramDetect(binary_warped):
     # Fit a second order polynomial to each
     leftLine.current_fit = np.polyfit(leftLine.ally, leftLine.allx, 2)
     rightLine.current_fit = np.polyfit(rightLine.ally, rightLine.allx, 2)
+    # update best_fit
+    leftLine.best_fit = leftLine.current_fit
+    rightLine.best_fit = rightLine.current_fit
+    # Generate x and y values for plotting
+    ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+    leftLine.recent_xfitted = leftLine.current_fit[0]*ploty**2 + leftLine.current_fit[1]*ploty + leftLine.current_fit[2]
+    rightLine.recent_xfitted = rightLine.current_fit[0]*ploty**2 + rightLine.current_fit[1]*ploty + rightLine.current_fit[2]
+    leftLine.bestx = np.mean(leftLine.recent_xfitted)
+    rightLine.bestx = np.mean(rightLine.recent_xfitted)
+
+    #print(leftLine.bestx)
 
     leftLine.detected = True
     rightLine.detected = True
+
 
 def reslutImage(OrgImage,warpedImage):
     warp_zero = np.zeros_like(warpedImage).astype(np.uint8)
@@ -161,8 +206,23 @@ def reslutImage(OrgImage,warpedImage):
     # Draw the lane onto the warped blank image
     cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
 
-    # Warp the blank back to original image space using inverse perspective matrix (Minv)
-    newwarp = cv2.warpPerspective(color_warp, df.Minv, (OrgImage.shape[1], OrgImage.shape[0]))
+    #newwarp = cv2.warpPerspective(color_warp, df.Minv, (OrgImage.shape[1], OrgImage.shape[0]))
+    newwarp = transform.unwarp(color_warp,OrgImage)
+
     # Combine the result with the original image
     result = cv2.addWeighted(OrgImage, 1, newwarp, 0.3, 0)
+    center_of_lane = int((leftLine.bestx + rightLine.bestx)/2)
+    center_of_vechical = int(OrgImage.shape[1]/2)
+    avgRadiusCurvature = (leftLine.radius_of_curvature +rightLine.radius_of_curvature)/2
+    offset = leftLine.calDistance()+ rightLine.calDistance()
+    cv2.putText(result,'Radius of curvature is {0:.2f} m'.format(avgRadiusCurvature),(20, 50),cv2.FONT_HERSHEY_DUPLEX,1,(255, 255, 255),thickness=2)
+    cv2.line(result,(center_of_lane,650),(center_of_lane,719), (255,0,0),2)
+    cv2.line(result,(center_of_vechical,600),(center_of_vechical,719), (0,0,255),2)
+    cv2.putText(result,'offset to center {0:.2f} m'.format(offset),(20, 80),cv2.FONT_HERSHEY_DUPLEX,1,(255, 255, 255),thickness=2)
+    cv2.putText(result,'left: {}'.format(leftLine.diffs),(20, 110),cv2.FONT_HERSHEY_DUPLEX,1,(255, 255, 255),thickness=2)
+    cv2.putText(result,'right:{}'.format(rightLine.diffs),(20, 145),cv2.FONT_HERSHEY_DUPLEX,1,(255, 255, 255),thickness=2)
+    if (leftLine.diffs[2] > 50 or rightLine.diffs[2] >50):
+        cv2.putText(result,'look!',(20, 175),cv2.FONT_HERSHEY_DUPLEX,1,(255, 0, 0),thickness=2)
+        #df.cnt = df.cnt +1
+
     return result
